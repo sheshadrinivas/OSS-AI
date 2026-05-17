@@ -18,7 +18,7 @@ export function loadWeights() {
     .get();
 
   if (!hidden_row || !output_row) {
-    throw new Error("No weight data found in DB");
+    throw new Error("DB returned empty result");
   }
 
   const weights_hidden = JSON.parse(hidden_row.data.toString());
