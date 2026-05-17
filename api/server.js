@@ -28,10 +28,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const { weights_hidden, weights_output } = loadWeights();
 const nn = new NeuralNetwork(124, 496, 8, 0.0001, 0.1);
 
 app.post("/predict", (req, res) => {
+  const { weights_hidden, weights_output } = loadWeights();
   const { features } = req.body;
   const rawOutput = nn.forward_pass(features, weights_hidden, weights_output);
 
