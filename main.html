@@ -1,0 +1,1161 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>PharmaAI — OOS Analyzer</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --bg: #0a0c0f;
+                --bg2: #111418;
+                --bg3: #181c22;
+                --border: rgba(255, 255, 255, 0.07);
+                --border2: rgba(255, 255, 255, 0.12);
+                --text: #e8eaed;
+                --text2: #7a8290;
+                --text3: #4a5260;
+                --accent: #00d4aa;
+                --accent2: #0066ff;
+                --danger: #ff4444;
+                --warn: #ffaa00;
+                --mono: "IBM Plex Mono", monospace;
+                --sans: "IBM Plex Sans", sans-serif;
+            }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                background: var(--bg);
+                color: var(--text);
+                font-family: var(--sans);
+                font-size: 14px;
+                min-height: 100vh;
+            }
+
+            /* ── Topbar ── */
+            .topbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 24px;
+                border-bottom: 1px solid var(--border);
+                background: var(--bg);
+                position: sticky;
+                top: 0;
+                z-index: 10;
+            }
+            .brand {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .brand-icon {
+                width: 32px;
+                height: 32px;
+                border-radius: 7px;
+                background: linear-gradient(135deg, #00d4aa18, #0066ff18);
+                border: 1px solid var(--accent);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .brand-icon svg {
+                width: 16px;
+                height: 16px;
+                stroke: var(--accent);
+                fill: none;
+                stroke-width: 1.5;
+            }
+            .brand-name {
+                font-size: 14px;
+                font-weight: 500;
+            }
+            .brand-sub {
+                font-size: 10px;
+                color: var(--text3);
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                margin-top: 1px;
+            }
+            .run-btn {
+                display: flex;
+                align-items: center;
+                gap: 7px;
+                padding: 8px 18px;
+                background: linear-gradient(135deg, #00d4aa12, #0066ff12);
+                border: 1px solid var(--accent);
+                border-radius: 6px;
+                color: var(--accent);
+                font-size: 13px;
+                font-weight: 500;
+                font-family: var(--mono);
+                cursor: pointer;
+                letter-spacing: 0.03em;
+                transition: background 0.2s;
+            }
+            .run-btn:hover {
+                background: linear-gradient(135deg, #00d4aa22, #0066ff22);
+            }
+            .run-btn svg {
+                width: 15px;
+                height: 15px;
+                stroke: var(--accent);
+                fill: none;
+                stroke-width: 1.5;
+            }
+            .status-pill {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 12px;
+                border: 1px solid #00d4aa30;
+                border-radius: 20px;
+                font-size: 11px;
+                font-family: var(--mono);
+                color: var(--accent);
+            }
+            .pulse {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: var(--accent);
+                animation: pulse 2s infinite;
+            }
+            @keyframes pulse {
+                0%,
+                100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.35;
+                }
+            }
+
+            /* ── Metrics ── */
+            .metrics {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                border-bottom: 1px solid var(--border);
+                background: var(--border);
+                gap: 1px;
+            }
+            .metric {
+                background: var(--bg2);
+                padding: 16px 24px;
+            }
+            .metric-label {
+                font-size: 10px;
+                color: var(--text3);
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                margin-bottom: 4px;
+            }
+            .metric-val {
+                font-size: 24px;
+                font-weight: 300;
+                font-family: var(--mono);
+                letter-spacing: -0.02em;
+            }
+            .metric-sub {
+                font-size: 11px;
+                color: var(--text3);
+                margin-top: 2px;
+            }
+            .metric-sub span {
+                color: var(--accent);
+            }
+
+            /* ── Layout ── */
+            .layout {
+                display: grid;
+                grid-template-columns: 1fr 340px;
+                min-height: calc(100vh - 105px);
+            }
+            .form-col {
+                padding: 24px;
+                border-right: 1px solid var(--border);
+                overflow-y: auto;
+            }
+            .result-col {
+                padding: 24px;
+                background: var(--bg2);
+                overflow-y: auto;
+            }
+
+            /* ── Section ── */
+            .section {
+                margin-bottom: 24px;
+            }
+            .sec-header {
+                display: flex;
+                align-items: center;
+                gap: 7px;
+                font-size: 10px;
+                color: var(--text3);
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                margin-bottom: 12px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid var(--border);
+            }
+            .sec-header svg {
+                width: 13px;
+                height: 13px;
+                stroke: var(--text3);
+                fill: none;
+                stroke-width: 1.5;
+            }
+            .sec-tag {
+                margin-left: auto;
+                font-size: 10px;
+                padding: 1px 7px;
+                border: 1px solid var(--border2);
+                border-radius: 20px;
+                color: var(--text3);
+            }
+
+            /* ── Fields ── */
+            .fg3 {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 8px;
+            }
+            .fg2 {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .field {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+            .field label {
+                font-size: 10px;
+                color: var(--text3);
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                font-family: var(--mono);
+            }
+            .field input,
+            .field select {
+                background: var(--bg3);
+                border: 1px solid var(--border);
+                border-radius: 5px;
+                height: 36px;
+                padding: 7px 10px;
+                color: var(--text);
+                font-size: 13px;
+                font-family: var(--mono);
+                outline: none;
+                transition: border-color 0.15s;
+                width: 100%;
+            }
+            .field input:focus,
+            .field select:focus {
+                border-color: var(--accent);
+            }
+            .field select option {
+                background: var(--bg3);
+            }
+
+            /* ── Flags ── */
+            .flags {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 6px;
+                margin-bottom: 8px;
+            }
+            .flag {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 8px 10px;
+                background: var(--bg3);
+                border: 1px solid var(--border);
+                border-radius: 5px;
+            }
+            .flag-name {
+                font-size: 12px;
+                color: var(--text2);
+            }
+            .toggle input[type="checkbox"] {
+                opacity: 0;
+                width: 0;
+                height: 0;
+                position: absolute;
+            }
+            .toggle-track {
+                display: block;
+                width: 32px;
+                height: 18px;
+                border-radius: 9px;
+                background: var(--bg);
+                border: 1px solid var(--border2);
+                cursor: pointer;
+                position: relative;
+                transition:
+                    background 0.15s,
+                    border-color 0.15s;
+            }
+            .toggle-track::after {
+                content: "";
+                position: absolute;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: var(--text3);
+                top: 2px;
+                left: 2px;
+                transition:
+                    left 0.15s,
+                    background 0.15s;
+            }
+            .toggle input:checked + .toggle-track {
+                background: #00d4aa18;
+                border-color: var(--accent);
+            }
+            .toggle input:checked + .toggle-track::after {
+                left: 16px;
+                background: var(--accent);
+            }
+
+            /* ── Result panel ── */
+            .result-label {
+                font-size: 10px;
+                color: var(--text3);
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                font-family: var(--mono);
+                margin-bottom: 3px;
+            }
+            .result-cause {
+                font-size: 24px;
+                font-weight: 300;
+                font-family: var(--mono);
+                letter-spacing: -0.02em;
+                margin-bottom: 2px;
+            }
+            .result-sub {
+                font-size: 12px;
+                color: var(--text3);
+                margin-bottom: 16px;
+            }
+
+            .conf-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 16px;
+            }
+            .conf-track {
+                flex: 1;
+                height: 4px;
+                background: var(--border);
+                border-radius: 2px;
+                overflow: hidden;
+            }
+            .conf-fill {
+                height: 100%;
+                background: var(--accent);
+                border-radius: 2px;
+                transition: width 0.5s;
+            }
+            .conf-pct {
+                font-size: 13px;
+                font-family: var(--mono);
+                color: var(--accent);
+            }
+
+            .divider {
+                height: 1px;
+                background: var(--border);
+                margin: 14px 0;
+            }
+
+            .prob-row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 6px;
+            }
+            .prob-label {
+                font-size: 11px;
+                color: var(--text3);
+                font-family: var(--mono);
+                width: 150px;
+                flex-shrink: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .prob-track {
+                flex: 1;
+                height: 3px;
+                background: var(--border);
+                border-radius: 2px;
+                overflow: hidden;
+            }
+            .prob-fill-top {
+                height: 100%;
+                border-radius: 2px;
+                background: var(--accent);
+            }
+            .prob-fill-low {
+                height: 100%;
+                border-radius: 2px;
+                background: var(--text3);
+            }
+            .prob-pct {
+                font-size: 11px;
+                font-family: var(--mono);
+                color: var(--text3);
+                width: 28px;
+                text-align: right;
+            }
+
+            .signal {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 6px 0;
+                border-bottom: 1px solid var(--border);
+            }
+            .signal:last-child {
+                border-bottom: none;
+            }
+            .sig-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+            .sig-text {
+                font-size: 12px;
+                color: var(--text2);
+                flex: 1;
+            }
+            .sig-val {
+                font-size: 11px;
+                font-family: var(--mono);
+                color: var(--text3);
+            }
+
+            .action-msg {
+                font-size: 12px;
+                color: var(--text2);
+                line-height: 1.7;
+                padding: 10px 12px;
+                background: var(--bg3);
+                border-left: 2px solid var(--accent);
+                border-radius: 0 4px 4px 0;
+                margin-top: 14px;
+            }
+
+            .footer-btns {
+                display: flex;
+                gap: 8px;
+                margin-top: 12px;
+            }
+            .btn-ghost {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                padding: 7px 12px;
+                font-size: 12px;
+                font-family: var(--mono);
+                border: 1px solid var(--border);
+                border-radius: 5px;
+                color: var(--text2);
+                background: transparent;
+                cursor: pointer;
+                transition:
+                    border-color 0.15s,
+                    color 0.15s;
+            }
+            .btn-ghost:hover {
+                border-color: var(--border2);
+                color: var(--text);
+            }
+            .btn-ghost svg {
+                width: 12px;
+                height: 12px;
+                stroke: currentColor;
+                fill: none;
+                stroke-width: 1.5;
+            }
+
+            .result-empty {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 300px;
+                gap: 10px;
+                color: var(--text3);
+                text-align: center;
+            }
+            .result-empty svg {
+                width: 36px;
+                height: 36px;
+                stroke: var(--text3);
+                fill: none;
+                stroke-width: 1;
+                opacity: 0.3;
+            }
+            .result-empty p {
+                font-size: 12px;
+                line-height: 1.6;
+            }
+
+            /* ── Responsive ── */
+            @media (max-width: 1100px) {
+                .layout {
+                    grid-template-columns: 1fr;
+                }
+                .form-col {
+                    border-right: none;
+                    border-bottom: 1px solid var(--border);
+                }
+            }
+            @media (max-width: 768px) {
+                .metrics {
+                    grid-template-columns: 1fr;
+                }
+                .fg3 {
+                    grid-template-columns: 1fr 1fr;
+                }
+                .flags {
+                    grid-template-columns: 1fr 1fr;
+                }
+                .topbar {
+                    padding: 10px 14px;
+                }
+                .brand-sub {
+                    display: none;
+                }
+            }
+            @media (max-width: 480px) {
+                .fg3,
+                .fg2 {
+                    grid-template-columns: 1fr;
+                }
+                .flags {
+                    grid-template-columns: 1fr;
+                }
+                .status-pill {
+                    display: none;
+                }
+                .footer-btns {
+                    flex-direction: column;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <nav class="topbar">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 3v11a3 3 0 006 0V3" />
+                        <line x1="6" y1="3" x2="18" y2="3" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="brand-name">PharmaAI — OOS Analyzer</div>
+                    <div class="brand-sub">Root cause intelligence</div>
+                </div>
+            </div>
+            <button class="run-btn" id="run-btn">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 8v4l3 3" />
+                </svg>
+                Run analysis
+            </button>
+            <div class="status-pill">
+                <div class="pulse"></div>
+                Mark.I &nbsp;·&nbsp; ONLINE
+            </div>
+        </nav>
+
+        <div class="metrics">
+            <div class="metric">
+                <div class="metric-label">Investigations today</div>
+                <div class="metric-val" id="inv-count">0</div>
+                <div class="metric-sub">
+                    <span id="inv-delta">+0</span> from yesterday
+                </div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Avg resolution time</div>
+                <div class="metric-val">2.1s</div>
+                <div class="metric-sub">vs <span>2.3 days</span> manual</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Model accuracy</div>
+                <div class="metric-val">98.2%</div>
+                <div class="metric-sub">on <span>1000</span> test samples</div>
+            </div>
+        </div>
+
+        <div class="layout">
+            <div class="form-col">
+                <!-- Batch details -->
+                <div class="section">
+                    <div class="sec-header">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"
+                            />
+                            <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                        Batch details
+                        <span class="sec-tag">tracking only</span>
+                    </div>
+                    <div class="fg3">
+                        <div class="field">
+                            <label>Batch no.</label
+                            ><input
+                                id="batch_no"
+                                type="text"
+                                value="BT-2024-0892"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>Product name</label
+                            ><input
+                                id="product_name"
+                                type="text"
+                                value="Amoxicillin 500mg"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>Test type</label>
+                            <select id="test_type">
+                                <option value="1">Release</option>
+                                <option value="2" selected>In-process</option>
+                                <option value="3">Stability</option>
+                                <option value="4">Raw material</option>
+                                <option value="5">Validation</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test results -->
+                <div class="section">
+                    <div class="sec-header">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M9 3v11a3 3 0 006 0V3" />
+                            <line x1="6" y1="3" x2="18" y2="3" />
+                        </svg>
+                        Test results
+                    </div>
+                    <div class="fg3" style="margin-bottom: 8px">
+                        <div class="field">
+                            <label>Assay (%)</label
+                            ><input
+                                id="assay_percent"
+                                type="number"
+                                step="0.1"
+                                value="87.4"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>pH</label
+                            ><input
+                                id="ph_value"
+                                type="number"
+                                step="0.1"
+                                value="8.2"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>Dissolution (%)</label
+                            ><input
+                                id="dissolution_percent"
+                                type="number"
+                                step="0.1"
+                                value="62.2"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>Moisture (%)</label
+                            ><input
+                                id="moisture_content_percent"
+                                type="number"
+                                step="0.1"
+                                value="2.3"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>Potency (%)</label
+                            ><input
+                                id="potency_percent"
+                                type="number"
+                                step="0.1"
+                                value="91.0"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>Uniformity (%)</label
+                            ><input
+                                id="uniformity_percent"
+                                type="number"
+                                step="0.1"
+                                value="88.5"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Equipment -->
+                <div class="section">
+                    <div class="sec-header">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="3" />
+                            <path
+                                d="M19.07 4.93l-1.41 1.41M5.34 18.66l-1.41 1.41M20 12h2M2 12h2M19.07 19.07l-1.41-1.41M5.34 5.34L3.93 3.93"
+                            />
+                        </svg>
+                        Equipment
+                    </div>
+                    <div class="fg3" style="margin-bottom: 8px">
+                        <div class="field">
+                            <label>Shaft wobble (mm)</label
+                            ><input
+                                id="shaft_wobble_mm"
+                                type="number"
+                                step="0.1"
+                                value="0.2"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>RPM actual</label
+                            ><input id="rpm_actual" type="number" value="50" />
+                        </div>
+                        <div class="field">
+                            <label>RPM set</label
+                            ><input id="rpm_set" type="number" value="50" />
+                        </div>
+                        <div class="field">
+                            <label>Last calibration (days)</label
+                            ><input
+                                id="last_calibration_days"
+                                type="number"
+                                value="30"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>Instrument age (yrs)</label
+                            ><input
+                                id="instrument_age_years"
+                                type="number"
+                                step="0.5"
+                                value="2"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>Instrument type</label>
+                            <select id="instrument_type">
+                                <option value="1">HPLC</option>
+                                <option value="2">GC</option>
+                                <option value="3">UV</option>
+                                <option value="4" selected>Dissolution</option>
+                                <option value="5">Balance</option>
+                                <option value="6">pH meter</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="fg3">
+                        <div class="field">
+                            <label>Temp bath actual (°C)</label
+                            ><input
+                                id="temperature_bath_actual_c"
+                                type="number"
+                                step="0.1"
+                                value="37.0"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>Temp bath set (°C)</label
+                            ><input
+                                id="temperature_bath_set_c"
+                                type="number"
+                                step="0.1"
+                                value="37.0"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>Service (days ago)</label
+                            ><input
+                                id="instrument_service_days"
+                                type="number"
+                                value="90"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Environment -->
+                <div class="section">
+                    <div class="sec-header">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 2a10 10 0 100 20A10 10 0 0012 2z" />
+                            <path d="M12 8v4l3 3" />
+                        </svg>
+                        Environment
+                    </div>
+                    <div class="fg3">
+                        <div class="field">
+                            <label>Lab temp (°C)</label
+                            ><input
+                                id="lab_temperature_c"
+                                type="number"
+                                step="0.1"
+                                value="22.0"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>Lab humidity (%)</label
+                            ><input
+                                id="lab_humidity_percent"
+                                type="number"
+                                step="0.1"
+                                value="45.0"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>Storage temp (°C)</label
+                            ><input
+                                id="storage_temperature_c"
+                                type="number"
+                                step="0.1"
+                                value="25.0"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Raw material -->
+                <div class="section">
+                    <div class="sec-header">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"
+                            />
+                        </svg>
+                        Raw material
+                    </div>
+                    <div class="fg3">
+                        <div class="field">
+                            <label>API purity (%)</label
+                            ><input
+                                id="api_purity_percent"
+                                type="number"
+                                step="0.1"
+                                value="99.2"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>RM age (days)</label
+                            ><input
+                                id="raw_material_age_days"
+                                type="number"
+                                value="30"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>Standard expiry (days)</label
+                            ><input
+                                id="standard_expiry_days"
+                                type="number"
+                                value="180"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Investigation flags -->
+                <div class="section">
+                    <div class="sec-header">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"
+                            />
+                            <line x1="4" y1="22" x2="4" y2="15" />
+                        </svg>
+                        Investigation flags
+                    </div>
+                    <div class="flags">
+                        <div class="flag">
+                            <span class="flag-name">Instrument calibrated</span
+                            ><label class="toggle"
+                                ><input
+                                    type="checkbox"
+                                    id="instrument_calibrated"
+                                    checked /><span class="toggle-track"></span
+                            ></label>
+                        </div>
+                        <div class="flag">
+                            <span class="flag-name"
+                                >Retest result different</span
+                            ><label class="toggle"
+                                ><input
+                                    type="checkbox"
+                                    id="retest_result_different"
+                                    checked /><span class="toggle-track"></span
+                            ></label>
+                        </div>
+                        <div class="flag">
+                            <span class="flag-name">CoA passed</span
+                            ><label class="toggle"
+                                ><input
+                                    type="checkbox"
+                                    id="coa_passed"
+                                    checked /><span class="toggle-track"></span
+                            ></label>
+                        </div>
+                        <div class="flag">
+                            <span class="flag-name">SOP followed</span
+                            ><label class="toggle"
+                                ><input
+                                    type="checkbox"
+                                    id="sop_followed" /><span
+                                    class="toggle-track"
+                                ></span
+                            ></label>
+                        </div>
+                        <div class="flag">
+                            <span class="flag-name">Supplier change</span
+                            ><label class="toggle"
+                                ><input
+                                    type="checkbox"
+                                    id="supplier_change_flag" /><span
+                                    class="toggle-track"
+                                ></span
+                            ></label>
+                        </div>
+                        <div class="flag">
+                            <span class="flag-name">Equipment malfunction</span
+                            ><label class="toggle"
+                                ><input
+                                    type="checkbox"
+                                    id="equipment_malfunction_flag"
+                                    checked /><span class="toggle-track"></span
+                            ></label>
+                        </div>
+                        <div class="flag">
+                            <span class="flag-name">HPLC suitability pass</span
+                            ><label class="toggle"
+                                ><input
+                                    type="checkbox"
+                                    id="hplc_system_suitability_pass"
+                                    checked /><span class="toggle-track"></span
+                            ></label>
+                        </div>
+                        <div class="flag">
+                            <span class="flag-name">Balance calibrated</span
+                            ><label class="toggle"
+                                ><input
+                                    type="checkbox"
+                                    id="balance_calibrated"
+                                    checked /><span class="toggle-track"></span
+                            ></label>
+                        </div>
+                        <div class="flag">
+                            <span class="flag-name">pH meter calibrated</span
+                            ><label class="toggle"
+                                ><input
+                                    type="checkbox"
+                                    id="ph_meter_calibrated"
+                                    checked /><span class="toggle-track"></span
+                            ></label>
+                        </div>
+                        <div class="flag">
+                            <span class="flag-name">Apparatus aligned</span
+                            ><label class="toggle"
+                                ><input
+                                    type="checkbox"
+                                    id="dissolution_apparatus_aligned" /><span
+                                    class="toggle-track"
+                                ></span
+                            ></label>
+                        </div>
+                        <div class="flag">
+                            <span class="flag-name">Filter integrity pass</span
+                            ><label class="toggle"
+                                ><input
+                                    type="checkbox"
+                                    id="filter_integrity_passed"
+                                    checked /><span class="toggle-track"></span
+                            ></label>
+                        </div>
+                        <div class="flag">
+                            <span class="flag-name">Calculation checked</span
+                            ><label class="toggle"
+                                ><input
+                                    type="checkbox"
+                                    id="calculation_checked" /><span
+                                    class="toggle-track"
+                                ></span
+                            ></label>
+                        </div>
+                        <div class="flag">
+                            <span class="flag-name">2nd analyst verified</span
+                            ><label class="toggle"
+                                ><input
+                                    type="checkbox"
+                                    id="second_analyst_verified" /><span
+                                    class="toggle-track"
+                                ></span
+                            ></label>
+                        </div>
+                        <div class="flag">
+                            <span class="flag-name">Raw material approved</span
+                            ><label class="toggle"
+                                ><input
+                                    type="checkbox"
+                                    id="raw_material_approved"
+                                    checked /><span class="toggle-track"></span
+                            ></label>
+                        </div>
+                        <div class="flag">
+                            <span class="flag-name">Retest diff analyst</span
+                            ><label class="toggle"
+                                ><input
+                                    type="checkbox"
+                                    id="retest_by_different_analyst"
+                                    checked /><span class="toggle-track"></span
+                            ></label>
+                        </div>
+                        <div class="flag">
+                            <span class="flag-name"
+                                >Excipient grade correct</span
+                            >
+                            <label class="toggle">
+                                <input
+                                    type="checkbox"
+                                    id="excipient_grade_correct"
+                                    checked
+                                />
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Analyst -->
+                    <div class="fg3">
+                        <div class="field">
+                            <label>Analyst shift</label>
+                            <select id="shift">
+                                <option value="1">Morning</option>
+                                <option value="2">Afternoon</option>
+                                <option value="3" selected>Night</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Experience (yrs)</label
+                            ><input
+                                id="analyst_experience_years"
+                                type="number"
+                                step="0.5"
+                                value="1.5"
+                            />
+                        </div>
+                        <div class="field">
+                            <label>Fatigue hours</label
+                            ><input
+                                id="analyst_fatigue_hours"
+                                type="number"
+                                step="0.5"
+                                value="8"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result panel -->
+            <div class="result-col">
+                <div class="sec-header">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"
+                        />
+                    </svg>
+                    Analysis output
+                </div>
+
+                <div id="result-empty" class="result-empty">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 8v4M12 16h.01" />
+                    </svg>
+                    <p>
+                        Fill in the investigation data<br />and click Run
+                        analysis
+                    </p>
+                </div>
+
+                <div id="result-content" style="display: none">
+                    <div class="result-label">Predicted root cause</div>
+                    <div class="result-cause" id="r-cause">—</div>
+                    <div class="result-sub" id="r-sub">—</div>
+
+                    <div class="result-label">Confidence</div>
+                    <div class="conf-row">
+                        <div class="conf-track">
+                            <div
+                                class="conf-fill"
+                                id="r-conf-bar"
+                                style="width: 0%"
+                            ></div>
+                        </div>
+                        <div class="conf-pct" id="r-conf-pct">—</div>
+                    </div>
+
+                    <div class="result-label" style="margin-bottom: 6px">
+                        Probability distribution
+                    </div>
+                    <div id="r-probs"></div>
+
+                    <div class="divider"></div>
+
+                    <div class="result-label" style="margin-bottom: 6px">
+                        Key signals
+                    </div>
+                    <div id="r-signals"></div>
+
+                    <div class="footer-btns">
+                        <button class="btn-ghost" onclick="exportReport()">
+                            <svg viewBox="0 0 24 24">
+                                <path
+                                    d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"
+                                />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            Export report
+                        </button>
+                        <button class="btn-ghost">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M3 3h18v18H3zM3 9h18M9 21V9" />
+                            </svg>
+                            View history
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="main.js"></script>
+    </body>
+</html>

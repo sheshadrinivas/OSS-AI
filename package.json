@@ -1,0 +1,19 @@
+{
+  "name": "oos-report-ai",
+  "version": "1.2.0",
+  "description": "A smart way to find root cause without spending days on end proving each root cuase.",
+  "license": "ISC",
+  "author": "sheshadri nivas chekuri",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev":"nodemon api/server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.10.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  }
+
+}
