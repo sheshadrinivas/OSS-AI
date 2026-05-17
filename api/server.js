@@ -2,6 +2,16 @@ import express from "express";
 import cors from "cors";
 import { loadWeights } from "../model.js";
 import { NeuralNetwork } from "../nn.js";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+app.use(express.static(path.join(__dirname, "../public")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public/index.html"));
+});
 
 const labels = [
   "analyst_error",
@@ -17,14 +27,9 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.get("/", (req, res) => {
-  res.sendFile(join(ROOT, "main.html"));
-});
+
 const { weights_hidden, weights_output } = loadWeights();
 const nn = new NeuralNetwork(124, 496, 8, 0.0001, 0.1);
-app.get("/", (req, res) => {
-  res.send("OSS-AI API running");
-});
 
 app.post("/predict", (req, res) => {
   const { features } = req.body;
@@ -42,5 +47,3 @@ app.post("/predict", (req, res) => {
   const predictedLabel = labels[predicted];
   res.json({ predictedLabel, predictedOutput, predicted });
 });
-
-app.listen(3000, () => console.log("running on :3000"));
