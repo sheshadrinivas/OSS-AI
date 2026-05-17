@@ -22,6 +22,9 @@ app.get("/", (req, res) => {
 });
 const { weights_hidden, weights_output } = loadWeights();
 const nn = new NeuralNetwork(124, 496, 8, 0.0001, 0.1);
+app.get("/", (req, res) => {
+  res.send("OSS-AI API running");
+});
 
 app.post("/predict", (req, res) => {
   const { features } = req.body;
