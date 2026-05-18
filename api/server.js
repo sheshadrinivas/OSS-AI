@@ -72,5 +72,9 @@ app.post("/predict", (req, res) => {
     res.status(500).json({ error: err.message }); // ← send actual error message
   }
 });
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
 export default app;
