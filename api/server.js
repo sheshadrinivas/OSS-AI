@@ -32,9 +32,9 @@ app.get("/", (req, res) => {
   res.sendFile(join(__dirname, "../public/index.html"));
 });
 
-app.post("/predict", (req, res) => {
+app.post("/predict", async (req, res) => {
   try {
-    const { weights_hidden, weights_output } = loadWeights();
+    const { weights_hidden, weights_output } = await loadWeights();
     const { features } = req.body;
 
     const rawOutput = nn.forward_pass(features, weights_hidden, weights_output);
@@ -47,6 +47,7 @@ app.post("/predict", (req, res) => {
     const predictedOutput = exps.map((v) => v / sum);
 
     const predicted = predictedOutput.indexOf(Math.max(...predictedOutput));
+
     const predictedLabel = labels[predicted];
 
     res.json({ predictedLabel, predictedOutput, predicted });
