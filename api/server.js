@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { loadWeights } from "../model.js";
+import { loadWeights } from "../models/model.js";
 import { NeuralNetwork } from "../nn.js";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
