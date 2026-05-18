@@ -26,15 +26,15 @@ const labels = [
   "sampling_error",
 ];
 
-const nn = new NeuralNetwork(124, 496, 8, 0.0001, 0.1);
+const nn = new NeuralNetwork(124, 992, 8, 0.0001, 0.1);
 
 app.get("/", (req, res) => {
   res.sendFile(join(__dirname, "../public/index.html"));
 });
 
-app.post("/predict", async (req, res) => {
+app.post("/predict", (req, res) => {
   try {
-    const { weights_hidden, weights_output } = await loadWeights();
+    const { weights_hidden, weights_output } = loadWeights();
     const { features } = req.body;
 
     const rawOutput = nn.forward_pass(features, weights_hidden, weights_output);
@@ -47,7 +47,6 @@ app.post("/predict", async (req, res) => {
     const predictedOutput = exps.map((v) => v / sum);
 
     const predicted = predictedOutput.indexOf(Math.max(...predictedOutput));
-
     const predictedLabel = labels[predicted];
 
     res.json({ predictedLabel, predictedOutput, predicted });
