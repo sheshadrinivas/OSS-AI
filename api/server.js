@@ -35,9 +35,27 @@ app.get("/", (req, res) => {
 app.post("/predict", (req, res) => {
   try {
     const { weights_hidden, weights_output } = loadWeights();
+
+    // Guard: weights failed to load
+    if (!weights_hidden || !weights_output) {
+      console.error("Weights failed to load");
+      return res.status(500).json({ error: "Weights not available" });
+    }
+
     const { features } = req.body;
 
+    // Guard: bad input
+    if (!features || !Array.isArray(features)) {
+      return res.status(400).json({ error: "Invalid features input" });
+    }
+
     const rawOutput = nn.forward_pass(features, weights_hidden, weights_output);
+
+    // Guard: bad output shape
+    if (!Array.isArray(rawOutput) || rawOutput.length !== labels.length) {
+      console.error("Unexpected rawOutput:", rawOutput);
+      return res.status(500).json({ error: "Model output shape mismatch" });
+    }
 
     const temperature = 0.1;
     const scaled = rawOutput.map((v) => v / temperature);
@@ -45,14 +63,13 @@ app.post("/predict", (req, res) => {
     const exps = scaled.map((v) => Math.exp(v - max));
     const sum = exps.reduce((a, b) => a + b, 0);
     const predictedOutput = exps.map((v) => v / sum);
-
     const predicted = predictedOutput.indexOf(Math.max(...predictedOutput));
     const predictedLabel = labels[predicted];
 
     res.json({ predictedLabel, predictedOutput, predicted });
   } catch (err) {
     console.error("Prediction error:", err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: err.message }); // ← send actual error message
   }
 });
 
