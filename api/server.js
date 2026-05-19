@@ -25,7 +25,17 @@ const labels = [
   "environmental_condition",
   "sampling_error",
 ];
+const volumePath = "/app/models";
+const files = ["weights_hidden.db", "weights_output.db"];
 
+for (const file of files) {
+  const dest = join(volumePath, file);
+  const src = join(__dirname, "../models", file);
+  if (!fs.existsSync(dest)) {
+    fs.copyFileSync(src, dest);
+    console.log(`Copied ${file} to volume`);
+  }
+}
 const nn = new NeuralNetwork(124, 992, 8, 0.0001, 0.1);
 
 app.get("/", (req, res) => {
