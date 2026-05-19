@@ -1,16 +1,16 @@
 import express from "express";
 import cors from "cors";
+import fs from "fs";
 import { loadWeights } from "../models/model.js";
 import { NeuralNetwork } from "../nn.js";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
-const app = express(); // ✅ MUST be first
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// middleware
+const app = express();
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(join(__dirname, "../public")));
@@ -25,17 +25,7 @@ const labels = [
   "environmental_condition",
   "sampling_error",
 ];
-const volumePath = "/app/models";
-const files = ["weights_hidden.db", "weights_output.db"];
 
-for (const file of files) {
-  const dest = join(volumePath, file);
-  const src = join(__dirname, "../models", file);
-  if (!fs.existsSync(dest)) {
-    fs.copyFileSync(src, dest);
-    console.log(`Copied ${file} to volume`);
-  }
-}
 const nn = new NeuralNetwork(124, 992, 8, 0.0001, 0.1);
 
 app.get("/", (req, res) => {
@@ -46,22 +36,18 @@ app.post("/predict", (req, res) => {
   try {
     const { weights_hidden, weights_output } = loadWeights();
 
-    // Guard: weights failed to load
     if (!weights_hidden || !weights_output) {
-      console.error("Weights failed to load");
       return res.status(500).json({ error: "Weights not available" });
     }
 
     const { features } = req.body;
 
-    // Guard: bad input
     if (!features || !Array.isArray(features)) {
       return res.status(400).json({ error: "Invalid features input" });
     }
 
     const rawOutput = nn.forward_pass(features, weights_hidden, weights_output);
 
-    // Guard: bad output shape
     if (!Array.isArray(rawOutput) || rawOutput.length !== labels.length) {
       console.error("Unexpected rawOutput:", rawOutput);
       return res.status(500).json({ error: "Model output shape mismatch" });
@@ -79,9 +65,10 @@ app.post("/predict", (req, res) => {
     res.json({ predictedLabel, predictedOutput, predicted });
   } catch (err) {
     console.error("Prediction error:", err);
-    res.status(500).json({ error: err.message }); // ← send actual error message
+    res.status(500).json({ error: err.message });
   }
 });
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
